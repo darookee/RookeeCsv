@@ -348,14 +348,12 @@ class Csv implements \Iterator {
         if(!is_null($limit))
             $end = $start + $limit;
         else
-            $end = $limit;
-        $cline = array();
-        foreach($this->getLines($start, $end) as $k => $line) {
-            foreach($line as $lk => $v) {
-                $cline[$lk] = $this->getEnclosure() . str_replace($this->getEnclosure(), $this->getEscape().$this->getEnclosure(), $v) . $this->getEnclosure();
-            }
-            $lines[$k] = implode($this->getDelimiter(), $cline);
-            $cline = array();
+            $end = $this->getLastIndex();
+
+        for($i=$start; $i<=$end; $i++) {
+            $cline = $this->getWritableLine($i);
+            if($cline)
+                $lines[$i] = $cline;
         }
 
         $csvString = implode($this->getLinefeed(), $lines);
