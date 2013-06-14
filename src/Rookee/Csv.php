@@ -372,6 +372,22 @@ class Csv implements \Iterator {
         }
     }
 
+    /**
+     * undocumented function
+     *
+     * @return string
+     * @author Nils Uliczka
+     */
+    public function getWritableLine($line = 0) {
+        if(isset($this->_lines[$line])) {
+            foreach($this->_lines[$line] as $lk => $v) {
+                $ret[$lk] = $this->getEnclosure() . str_replace($this->getEnclosure(), $this->getEscape().$this->getEnclosure(), $v) . $this->getEnclosure();
+            }
+            return implode($this->getDelimiter(), $ret);
+        }
+        return false;
+    }
+
     /** Iterator **/
     /**
      * returns current index
