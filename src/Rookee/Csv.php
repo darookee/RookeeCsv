@@ -332,7 +332,8 @@ class Csv implements \Iterator {
      * @author Nils Uliczka
      */
     public function getLastIndex() {
-        return (count($this->_lines)-1);
+        $keys = array_keys($this->_lines);
+        return $keys[count($keys)-1];
     }
     /**
     * returns the csv or writes it to file
