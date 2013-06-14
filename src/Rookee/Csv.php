@@ -342,6 +342,9 @@ class Csv implements \Iterator {
      * @author Nils Uliczka
      */
     public function write($toFile = false, $start = 0, $limit = NULL) {
+        if(empty($this->_lines))
+            return false;
+
         if(!is_null($limit))
             $end = $start + $limit;
         else
