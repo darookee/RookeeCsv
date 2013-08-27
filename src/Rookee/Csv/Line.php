@@ -14,21 +14,21 @@ class Line implements \ArrayAccess, \Iterator {
     /**
      * undocumented class variable
      *
-     * @var string
+     * @var int
      */
     protected $_curIndex = 0;
 
     /**
      * undocumented class variable
      *
-     * @var string
+     * @var array
      */
     protected $_fields = array();
 
     /**
      * undocumented class variable
      *
-     * @var string
+     * @var Rookee\Csv\Header
      */
     protected $_header = NULL;
 

@@ -187,7 +187,7 @@ class Csv implements \Iterator {
      * @return void
      * @author Nils Uliczka
      */
-    public function getdelimiter() {
+    public function getDelimiter() {
         return $this->_delimiter;
     }
 
@@ -197,7 +197,7 @@ class Csv implements \Iterator {
      * @return void
      * @author Nils Uliczka
      */
-    public function setdelimiter($sep) {
+    public function setDelimiter($sep) {
         if(strlen($sep)>1)
             throw new \Exception('delimiter can only be one character');
         $this->_delimiter = $sep;
