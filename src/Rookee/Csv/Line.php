@@ -28,9 +28,30 @@ class Line implements \ArrayAccess, \Iterator {
     /**
      * undocumented class variable
      *
+     * @var array
+     */
+    protected $_convertedFields = array();
+
+    /**
+     * undocumented class variable
+     *
      * @var Rookee\Csv\Header
      */
     protected $_header = NULL;
+
+    /**
+     * undocumented class variable
+     *
+     * @var array
+     */
+    protected $_converter = array();
+
+    /**
+     * undocumented class variable
+     *
+     * @var bool
+     */
+    protected $_useConverted = true;
 
     /**
      * undocumented function
@@ -38,7 +59,8 @@ class Line implements \ArrayAccess, \Iterator {
      * @return void
      * @author Nils Uliczka
      */
-    public function __construct(Array $fields = array(), Header $header) {
+    public function __construct(Array $fields = array(), Header $header, Array $converter = array()) {
+        $this->setConverter($converter);
         $this->setHeader($header);
         $this->setFields($fields);
     }
@@ -53,7 +75,14 @@ class Line implements \ArrayAccess, \Iterator {
         foreach($fields as $k => $v) {
             if(!is_numeric($k))
                 $k = $this->getHeader()->offsetGet($k);
+
+            if(is_callable($conv = $this->getConverter($this->getHeader()->offsetGet($k))))
+                $cV = call_user_func_array($conv, array($v));
+            else
+                $cV = $v;
+
             $this->_fields[$k] = $v;
+            $this->_convertedFields[$k] = $cV;
         }
     }
 
@@ -64,6 +93,8 @@ class Line implements \ArrayAccess, \Iterator {
      * @author Nils Uliczka
      */
     public function getFields() {
+        if($this->getUseConverted() && !empty($this->_convertedFields))
+            return $this->_convertedFields;
         return $this->_fields;
     }
 
@@ -87,6 +118,54 @@ class Line implements \ArrayAccess, \Iterator {
         return $this->_header;
     }
 
+    /**
+     * undocumented function
+     *
+     * @return void
+     * @author Nils Uliczka
+     */
+    public function setUseConverted($use = true) {
+        $this->_useConverted = $use;
+    }
+
+    /**
+     * undocumented function
+     *
+     * @return bool
+     * @author Nils Uliczka
+     */
+    public function getUseConverted() {
+        return $this->_useConverted;
+    }
+
+    /**
+     * undocumented function
+     *
+     * @return void
+     * @author Nils Uliczka
+     */
+    public function setConverter(Array $converter = array()) {
+        $this->_converter = $converter;
+        $this->setFields($this->getFields());
+    }
+
+    /**
+     * undocumented function
+     *
+     * @return void
+     * @author Nils Uliczka
+     */
+    public function getConverter($offset = NULL) {
+        if(empty($offset))
+            return $this->_converter;
+        if(is_numeric($offset))
+            $offset = $this->getHeader()->offsetGet($offset);
+        if(isset($this->_converter[$offset]))
+            return $this->_converter[$offset];
+
+        return false;
+    }
+
     /** Iterator **/
     /**
      * returns current index
@@ -95,7 +174,7 @@ class Line implements \ArrayAccess, \Iterator {
      * @author Nils Uliczka
      */
     public function current() {
-        return ($this->offsetExists($this->_curIndex)?$this->_fields[$this->_curIndex]:null);
+        return ($this->offsetExists($this->_curIndex)?($this->getUseConverted()?$this->_convertedFields[$this->_curIndex]:$this->_fields[$this->_curIndex]):null);
     }
 
     /**
@@ -157,10 +236,10 @@ class Line implements \ArrayAccess, \Iterator {
      * @author Nils Uliczka
      */
     public function offsetGet($offset) {
-        $r = $this->offsetExists($offset)?$this->_fields[$offset]:null;
+        $r = $this->offsetExists($offset)?($this->getUseConverted()?$this->_convertedFields[$offset]:$this->_fields[$offset]):null;
         if(!$r) {
             $hOffset = $this->_header[$offset];
-            $r = $this->offsetExists($hOffset)?$this->_fields[$hOffset]:null;
+            $r = $this->offsetExists($hOffset)?($this->getUseConverted()?$this->_convertedFields[$hOffset]:$this->_fields[$hOffset]):null;
         }
         return $r;
     }
@@ -176,6 +255,7 @@ class Line implements \ArrayAccess, \Iterator {
             throw new \Excepton('Cannot set without key');
         } else {
             $this->_fields[$offset] = $value;
+            $this->_convertedFields[$offset] = $value;
         }
     }
 
@@ -187,5 +267,6 @@ class Line implements \ArrayAccess, \Iterator {
      */
     public function offsetUnset($offset) {
         unset($this->_fields[$offset]);
+        unset($this->_convertedFields[$offset]);
     }
 } // END class Header

@@ -68,6 +68,20 @@ class Csv implements \Iterator {
     protected $_linefeed = "\n";
 
     /**
+     * undocumented class variable
+     *
+     * @var array
+     */
+    protected $_converter = array();
+
+    /**
+     * undocumented class variable
+     *
+     * @var bool
+     */
+    protected $_useConverted = true;
+
+    /**
      * undocumented function
      *
      * @return void
@@ -136,7 +150,9 @@ class Csv implements \Iterator {
     public function addLine(Array $line = array()) {
         if(empty($line))
             throw new \Exception('Line may not be empty');
-        $this->_lines[] = new Line($line, $this->getHeader());
+        $newLine = new Line($line, $this->getHeader(), $this->getConverter());
+        $newLine->setUseConverted($this->getUseConverted());
+        $this->_lines[] = $newLine;
     }
 
     /**
@@ -174,7 +190,8 @@ class Csv implements \Iterator {
             fclose($f);
             $header = str_getcsv($h, $this->getDelimiter(), $this->getEnclosure(), $this->getEscape());
             $this->setHeader(new Header($header));
-            $this->_lines[0] = new Line($header, $this->getHeader());
+            $this->_lines[0] = new Line($header, $this->getHeader(), $this->getConverter());
+            $this->_lines[0]->setUseConverted($this->getUseConverted());
             return $this->getHeader();
         } else {
             throw new \Exception('No CSV file given.');
@@ -288,6 +305,53 @@ class Csv implements \Iterator {
     }
 
     /**
+     * undocumented function
+     *
+     * @return void
+     * @author Nils Uliczka
+     */
+    public function setConverter(Array $converter) {
+        $this->_converter = $converter;
+        foreach($this->_lines as $k => $v) {
+            if(false === ($v instanceof Header))
+                $this->_lines[$k]->setConverter($this->getConverter());
+        }
+    }
+
+    /**
+     * undocumented function
+     *
+     * @return void
+     * @author Nils Uliczka
+     */
+    public function getConverter() {
+        return $this->_converter;
+    }
+
+    /**
+     * undocumented function
+     *
+     * @return void
+     * @author Nils Uliczka
+     */
+    public function setUseConverted($use = true) {
+        $this->_useConverted = $use;
+        foreach($this->_lines as $k => $v) {
+            $this->_lines[$k]->setUseConverted($this->getUseConverted());
+        }
+    }
+
+    /**
+     * undocumented function
+     *
+     * @return void
+     * @author Nils Uliczka
+     */
+    public function getUseConverted() {
+        return $this->_useConverted;
+    }
+
+    /**
      * reads the file
      *
      * @return void
@@ -308,8 +372,10 @@ class Csv implements \Iterator {
             $cl = 0;
             while(!feof($f)) {
                 $line = str_getcsv(fgets($f), $this->getDelimiter(), $this->getEnclosure(), $this->getEscape());
-                if($cl >= $start && !empty($line[0]))
-                    $lines[$cl] = new Line($line, $this->getHeader());
+                if($cl >= $start && !empty($line[0])) {
+                    $lines[$cl] = new Line($line, $this->getHeader(), $this->getConverter());
+                    $lines[$cl]->setUseConverted($this->getUseConverted());
+                }
                 if($cl == ($start+$limit)-1 && !is_null($limit))
                     break;
                 $cl++;
@@ -335,6 +401,7 @@ class Csv implements \Iterator {
         $keys = array_keys($this->_lines);
         return $keys[count($keys)-1];
     }
+
     /**
     * returns the csv or writes it to file
      *
